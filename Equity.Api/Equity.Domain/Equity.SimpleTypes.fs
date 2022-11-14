@@ -1,6 +1,19 @@
 ﻿namespace Equity.Domain
 
 open System
+
+type OrgUnit = Undefined
+type VestingPeriod = Undefined
+type VestingSchedule = Undefined
+type DiscountRate = Undefined
+type EligiblePopulation = Undefined
+type Conditions = Undefined
+
+type IndividualPlanStatus =
+    | NotStarted 
+    | InAllocationProcess
+    | InReview
+    | Allocated
             
 [<Struct>]
 type PlanName = PlanName of string
