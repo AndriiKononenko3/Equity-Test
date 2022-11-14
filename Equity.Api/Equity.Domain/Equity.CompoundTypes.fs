@@ -13,7 +13,7 @@ type EquityPlan = {
     PlanName : PlanName 
     PlanType : PlanType
     AllocationReason : AllocationReason
-    Price : Price
+    EquityValue : EquityValue
     // VestingPeriod : VestingPeriod
     // VestingSchedule : VestingSchedule
     // DiscountRate : DiscountRate
@@ -26,22 +26,22 @@ type EquityPlan = {
     }
 
  module EquityPlanModule =
-    let private createEquityPlan id name planType reason price =
+    let private createEquityPlan id name planType reason equityValue =
         {
             EquityPlanId = id;
             PlanName = name;
             PlanType = planType
             AllocationReason = reason
-            Price = price
+            EquityValue = equityValue
         }
     
     let (<!>) = Validation.map
     let (<*>) = Validation.apply
 
-    let createEquityPlanValidated id name planType reason price :Validation<EquityPlan, DomainError> =
+    let createEquityPlanValidated id name planType reason equityValue :Validation<EquityPlan, DomainError> =
         let equityPlanId = id |> EquityPlanId.create
         let planName = name |> PlanName.create
         let planType = planType |> PlanType.create (nameof planType)
         let allocationReason = reason |> AllocationReason.create (nameof reason)
-        let price = price |> Price.create
-        createEquityPlan <!> equityPlanId <*> planName <*> planType <*> allocationReason <*> price
+        let equityValue = equityValue |> EquityValue.create
+        createEquityPlan <!> equityPlanId <*> planName <*> planType <*> allocationReason <*> equityValue

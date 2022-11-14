@@ -95,16 +95,16 @@ type AllocationReason =
         | RetentionReward -> "RetentionReward"
 
 [<Struct>]
-type Price = private Price of decimal
+type EquityValue = private EquityValue of decimal
 
-module Price =
-    let value (Price v) = v
+module EquityValue =
+    let value (EquityValue v) = v
 
-    let create v :Validation<Price, DomainError> = 
-        let result = ConstrainedType.createDecimal "Price" Price 0.0M 1000M v
+    let create v :Validation<EquityValue, DomainError> = 
+        let result = ConstrainedType.createDecimal "Price" EquityValue 0.0M 1_000_000_000M v
         match result with
         | Ok result -> Ok result
         | Error msg -> Error[msg]
 
-    let multiply qty (Price p) = 
+    let multiply qty (EquityValue p) = 
         create (qty * p)
