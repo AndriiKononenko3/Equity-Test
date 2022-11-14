@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Include="Result.fs" />
+        <Compile Include="Equity.Errors.fs" />
+        <Compile Include="Equity.ConstrainedType.fs" />
+        <Compile Include="Equity.SimpleTypes.fs" />
+        <Compile Include="Equity.CompoundTypes.fs" />
+        <Compile Include="EquityPlan.Dto.fs" />
+    </ItemGroup>
+
+</Project>

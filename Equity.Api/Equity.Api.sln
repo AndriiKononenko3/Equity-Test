@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Equity.Domain", "Equity.Domain\Equity.Domain.fsproj", "{B5DB7404-F945-4326-BC7A-D9E645F29020}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Equity.Api", "Equity.Api\Equity.Api.csproj", "{59AB5421-32D3-49E7-89BF-26FB4DF179AB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Equity.Persistence", "Equity.Persistence\Equity.Persistence.csproj", "{C323F809-B26D-4736-BC7B-7F30109347D9}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B5DB7404-F945-4326-BC7A-D9E645F29020}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B5DB7404-F945-4326-BC7A-D9E645F29020}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B5DB7404-F945-4326-BC7A-D9E645F29020}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B5DB7404-F945-4326-BC7A-D9E645F29020}.Release|Any CPU.Build.0 = Release|Any CPU
+		{59AB5421-32D3-49E7-89BF-26FB4DF179AB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{59AB5421-32D3-49E7-89BF-26FB4DF179AB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{59AB5421-32D3-49E7-89BF-26FB4DF179AB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{59AB5421-32D3-49E7-89BF-26FB4DF179AB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C323F809-B26D-4736-BC7B-7F30109347D9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C323F809-B26D-4736-BC7B-7F30109347D9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C323F809-B26D-4736-BC7B-7F30109347D9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C323F809-B26D-4736-BC7B-7F30109347D9}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
