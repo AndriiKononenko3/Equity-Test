@@ -28,7 +28,7 @@ public class CreateEquityPlanCommandHandler : IRequestHandler<CreateEquityPlanCo
             return Validation<string, Guid>.Fail(new Seq<string>(errors));
         }
         
-        // saves
+        // saves to db
         return Validation<string, Guid>.Success(created.ResultValue.EquityPlanId.Item);
     }
 }

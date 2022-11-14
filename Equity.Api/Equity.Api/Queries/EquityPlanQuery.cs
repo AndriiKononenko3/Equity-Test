@@ -22,12 +22,13 @@ public class EquityPlanQueryHandler : IRequestHandler<EquityPlanQuery.Request, V
             equity =>
             {
                 var domainObject = EquityPlanMapping.toEquityPlan(equity);
-                if (domainObject.IsError)
+                if (!domainObject.IsError)
                 {
-                    var errors = domainObject.ErrorValue.Select(x => x.ToString()).ToList();
-                    return Validation<string, EquityPlanDto>.Fail(new Seq<string>(errors));
+                    return Validation<string, EquityPlanDto>.Success(EquityPlanMapping.fromEquityPlan(domainObject.ResultValue));
                 }
-                return Validation<string, EquityPlanDto>.Success(EquityPlanMapping.fromEquityPlan(domainObject.ResultValue));
+
+                var errors = domainObject.ErrorValue.Select(x => x.ToString()).ToList();
+                return Validation<string, EquityPlanDto>.Fail(new Seq<string>(errors));
             },
             () => Validation<string, EquityPlanDto>.Fail(new Seq<string>(new []{ "Not found" })));
     }

@@ -10,7 +10,7 @@
         <Compile Include="Equity.Errors.fs" />
         <Compile Include="Equity.ConstrainedType.fs" />
         <Compile Include="Equity.SimpleTypes.fs" />
-        <Compile Include="Equity.CompoundTypes.fs" />
+        <Compile Include="Equity.DomainTypes.fs" />
         <Compile Include="EquityPlan.Dto.fs" />
     </ItemGroup>
 
