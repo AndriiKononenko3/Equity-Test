@@ -38,10 +38,10 @@ type EquityPlan = {
     let (<!>) = Validation.map
     let (<*>) = Validation.apply
 
-    let createEquityPlanValidated id name planType reason equityValue :Validation<EquityPlan, DomainError> =
+    let createEquityPlanValidated id name planType reason equityAmount equityCurrency :Validation<EquityPlan, DomainError> =
         let equityPlanId = id |> EquityPlanId.create
         let planName = name |> PlanName.create
         let planType = planType |> PlanType.create (nameof planType)
         let allocationReason = reason |> AllocationReason.create (nameof reason)
-        let equityValue = equityValue |> EquityValue.create
+        let equityValue = EquityValue.create equityAmount equityCurrency
         createEquityPlan <!> equityPlanId <*> planName <*> planType <*> allocationReason <*> equityValue

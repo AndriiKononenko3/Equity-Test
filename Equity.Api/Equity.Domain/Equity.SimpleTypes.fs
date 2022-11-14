@@ -9,6 +9,36 @@ type DiscountRate = Undefined
 type EligiblePopulation = Undefined
 type Conditions = Undefined
 
+type FiatCurrency =
+    | USD 
+    | EUR
+
+module FiatCurrency =
+    let create fieldName str :Validation<FiatCurrency, DomainError> = 
+        match str with
+        | "USD" | "usd" -> 
+            Ok USD
+        | "EUR" | "eur" -> 
+            Ok EUR
+        | _ -> 
+            // all other cases
+            let msg = NotValidFiatCurrency $"%s{fieldName}: Must be one of 'USD', 'EUR'" 
+            Error [msg]
+            
+    let value fiatCurrency = 
+        match fiatCurrency with
+        | USD -> "USD"
+        | EUR -> "EUR"
+        
+type CryptoCurrency =
+    | BTC 
+    | ETH
+    | SOL
+    
+type Currency =
+    | FiatCurrency of FiatCurrency
+    | CryptoCurrency of CryptoCurrency
+
 type IndividualPlanStatus =
     | NotStarted 
     | InAllocationProcess
@@ -95,16 +125,20 @@ type AllocationReason =
         | RetentionReward -> "RetentionReward"
 
 [<Struct>]
-type EquityValue = private EquityValue of decimal
+type EquityValue = private EquityValue of amount:decimal * currency:Currency
 
 module EquityValue =
-    let value (EquityValue v) = v
+    let amountValue (EquityValue (v, _)) = v
+    
+    let currencyValue (EquityValue (_, currency)) =
+        match currency with
+        | FiatCurrency fiat -> match fiat with
+                                    | USD -> USD |> FiatCurrency.value
+                                    | EUR -> EUR |> FiatCurrency.value
+        | _ -> failwith "todo"
 
-    let create v :Validation<EquityValue, DomainError> = 
-        let result = ConstrainedType.createDecimal "Price" EquityValue 0.0M 1_000_000_000M v
-        match result with
-        | Ok result -> Ok result
-        | Error msg -> Error[msg]
-
-    let multiply qty (EquityValue p) = 
-        create (qty * p)
+    let create v c :Validation<EquityValue, DomainError> =
+        let currencyResult = c |> FiatCurrency.create (nameof c)
+        match currencyResult with
+        | Ok fiatCurrency -> Ok (EquityValue(v, FiatCurrency fiatCurrency))
+        | Error msg -> Error msg

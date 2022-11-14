@@ -14,7 +14,14 @@ public class CreateEquityPlanCommandHandler : IRequestHandler<CreateEquityPlanCo
 {
     public async Task<Validation<string, Guid>> Handle(CreateEquityPlanCommand.Request request, CancellationToken cancellationToken)
     {
-        var created = EquityPlanModule.createEquityPlanValidated(Guid.NewGuid(), request.Dto.Name, request.Dto.Type, request.Dto.AllocationReason, request.Dto.Price);
+        var created = EquityPlanModule.createEquityPlanValidated(
+            Guid.NewGuid(),
+            request.Dto.Name,
+            request.Dto.Type,
+            request.Dto.AllocationReason,
+            request.Dto.Amount,
+            request.Dto.Currency);
+        
         if (created.IsError)
         {
             var errors = created.ErrorValue.Select(x => x.ToString()).ToList();

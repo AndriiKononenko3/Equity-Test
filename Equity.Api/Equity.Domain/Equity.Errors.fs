@@ -6,3 +6,4 @@ type DomainError =
     | PlanTypeDoesNotExist of string
     | AllocationReasonDoesNotExist of string
     | DecimalValueExceedsLimit of string
+    | NotValidFiatCurrency of string

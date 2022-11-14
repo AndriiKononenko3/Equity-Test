@@ -8,6 +8,7 @@ type EquityPlanDto = {
     Type : string
     AllocationReason : string
     EquityValue : decimal
+    EquityCurrency : string
     }
 
 module public EquityPlanMapping =
@@ -18,7 +19,8 @@ module public EquityPlanMapping =
             Name = domainObj.PlanName |> PlanName.value
             Type = domainObj.PlanType |> PlanType.value
             AllocationReason = domainObj.AllocationReason |> AllocationReason.value
-            EquityValue = domainObj.EquityValue |> EquityValue.value
+            EquityValue = domainObj.EquityValue |> EquityValue.amountValue
+            EquityCurrency = domainObj.EquityValue |> EquityValue.currencyValue
         }
         
     let toEquityPlan (dto:EquityPlanDto) :Result<EquityPlan,DomainError list> =
@@ -27,7 +29,7 @@ module public EquityPlanMapping =
             let! planName = dto.Name |> PlanName.create
             let! planType = dto.Type |> PlanType.create (nameof dto.Type)
             let! allocationReason = dto.AllocationReason |> AllocationReason.create (nameof dto.AllocationReason)
-            let! price = dto.EquityValue |> EquityValue.create
+            let! price = EquityValue.create dto.EquityValue dto.EquityCurrency
             
             let equityPlan = {
                 EquityPlanId = equityPlanId
