@@ -1,11 +1,28 @@
 namespace Equity.Domain
 
+type IndividualEquityPlan = {
+    OrgUnit : OrgUnit
+    AllocatedShares : double
+    PercentAllocated : double
+    PercentRemaining : double
+    Status : IndividualPlanStatus
+}
+
 type EquityPlan = {
     EquityPlanId : EquityPlanId 
     PlanName : PlanName 
     PlanType : PlanType
     AllocationReason : AllocationReason
     Price : Price
+    // VestingPeriod : VestingPeriod
+    // VestingSchedule : VestingSchedule
+    // DiscountRate : DiscountRate
+    // EligiblePopulation : EligiblePopulation
+    // Conditions : Conditions
+    // IndividualEquityPlanItems : IndividualEquityPlan list
+    // DateCreated : DateTime
+    // DateExpired : DateTime
+    // TotalShares : double
     }
 
  module EquityPlanModule =
