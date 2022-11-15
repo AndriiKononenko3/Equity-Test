@@ -27,7 +27,7 @@ public class EquityPlanQueryHandler : IRequestHandler<EquityPlanQuery.Request, V
                     return Validation<string, EquityPlanDto>.Success(EquityPlanMapping.fromEquityPlan(domainObject.ResultValue));
                 }
 
-                var errors = domainObject.ErrorValue.Select(x => x.ToString()).ToList();
+                var errors = domainObject.ErrorValue.Select(DomainError.getErrorMsg).ToList();
                 return Validation<string, EquityPlanDto>.Fail(new Seq<string>(errors));
             },
             () => Validation<string, EquityPlanDto>.Fail(new Seq<string>(new []{ "Not found" })));

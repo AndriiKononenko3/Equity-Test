@@ -24,7 +24,7 @@ public class CreateEquityPlanCommandHandler : IRequestHandler<CreateEquityPlanCo
         
         if (created.IsError)
         {
-            var errors = created.ErrorValue.Select(x => x.ToString()).ToList();
+            var errors = created.ErrorValue.Select(DomainError.getErrorMsg).ToList();
             return Validation<string, Guid>.Fail(new Seq<string>(errors));
         }
         
