@@ -11,7 +11,8 @@
         <Compile Include="Equity.ConstrainedType.fs" />
         <Compile Include="Equity.SimpleTypes.fs" />
         <Compile Include="Equity.DomainTypes.fs" />
-        <Compile Include="EquityPlan.Dto.fs" />
+        <Compile Include="EquityPlanTemplate.Dto.fs" />
+        <Compile Include="IndividualEquityPlan.Dto.fs" />
     </ItemGroup>
 
 </Project>

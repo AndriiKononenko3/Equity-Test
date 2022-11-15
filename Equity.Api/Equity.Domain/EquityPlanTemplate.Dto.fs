@@ -2,7 +2,7 @@ namespace Equity.Domain
 
 open System
 
-type EquityPlanDto = {
+type EquityPlanTemplateDto = {
     Id : Guid
     Name : string
     Type : string
@@ -11,9 +11,9 @@ type EquityPlanDto = {
     EquityCurrency : string
     }
 
-module public EquityPlanMapping =
+module public EquityPlanTemplateMapping =
     
-    let fromEquityPlan (domainObj:EquityPlan) :EquityPlanDto = 
+    let fromEquityPlan (domainObj:EquityPlanTemplate) :EquityPlanTemplateDto = 
         {
             Id = domainObj.EquityPlanId |> EquityPlanId.value
             Name = domainObj.PlanName |> PlanName.value
@@ -23,7 +23,7 @@ module public EquityPlanMapping =
             EquityCurrency = domainObj.EquityValue |> EquityValue.currencyValue
         }
         
-    let toEquityPlan (dto:EquityPlanDto) :Result<EquityPlan,DomainError list> =
+    let toEquityPlan (dto:EquityPlanTemplateDto) :Result<EquityPlanTemplate,DomainError list> =
         result {
             let! equityPlanId = dto.Id |> EquityPlanId.create
             let! planName = dto.Name |> PlanName.create

@@ -8,14 +8,14 @@ namespace Equity.Api.Queries;
 
 public class EquityPlanQuery
 {
-    public record Request(Guid Id) : IRequest<Validation<string, EquityPlanDto>>;
+    public record Request(Guid Id) : IRequest<Validation<string, EquityPlanTemplateDto>>;
 }
 
-public class EquityPlanQueryHandler : IRequestHandler<EquityPlanQuery.Request, Validation<string, EquityPlanDto>>
+public class EquityPlanQueryHandler : IRequestHandler<EquityPlanQuery.Request, Validation<string, EquityPlanTemplateDto>>
 {
     private readonly EquityRepository _equityRepository = new ();
     
-    public async Task<Validation<string, EquityPlanDto>> Handle(
+    public async Task<Validation<string, EquityPlanTemplateDto>> Handle(
         EquityPlanQuery.Request request,
         CancellationToken cancellationToken)
     {
@@ -24,15 +24,15 @@ public class EquityPlanQueryHandler : IRequestHandler<EquityPlanQuery.Request, V
         return equityResult.Match(
             equity =>
             {
-                var domainObject = EquityPlanMapping.toEquityPlan(equity);
+                var domainObject = EquityPlanTemplateMapping.toEquityPlan(equity);
                 if (!domainObject.IsError)
                 {
-                    return Validation<string, EquityPlanDto>.Success(EquityPlanMapping.fromEquityPlan(domainObject.ResultValue));
+                    return Validation<string, EquityPlanTemplateDto>.Success(EquityPlanTemplateMapping.fromEquityPlan(domainObject.ResultValue));
                 }
 
                 var errors = domainObject.ErrorValue.Select(DomainError.getErrorMsg).ToList();
-                return Validation<string, EquityPlanDto>.Fail(new Seq<string>(errors));
+                return Validation<string, EquityPlanTemplateDto>.Fail(new Seq<string>(errors));
             },
-            () => Validation<string, EquityPlanDto>.Fail(new Seq<string>(new []{ ApplicationErrors.NotFoundError(nameof(EquityPlanDto), request.Id.ToString()) })));
+            () => Validation<string, EquityPlanTemplateDto>.Fail(new Seq<string>(new []{ ApplicationErrors.NotFoundError(nameof(EquityPlanTemplateDto), request.Id.ToString()) })));
     }
 }

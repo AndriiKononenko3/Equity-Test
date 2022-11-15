@@ -1,14 +1,42 @@
 namespace Equity.Domain
 
-type IndividualEquityPlan = {
+open System
+
+type DraftIndividualEquityPlan = {
+    Id : Guid
+    UserId : Guid
+    OrgUnit : OrgUnit
+    AllocatedShares : double
+    EquityPlanId : EquityPlanId
+}
+
+type InReviewIndividualEquityPlan = {
+    Id : Guid
+    UserId : Guid
+    OrgUnit : OrgUnit
+    AllocatedShares : double
+    EquityPlanId : EquityPlanId
+}
+
+type AllocatedIndividualEquityPlan = {
+    Id : Guid
+    UserId : Guid
     OrgUnit : OrgUnit
     AllocatedShares : double
     PercentAllocated : double
     PercentRemaining : double
-    Status : IndividualPlanStatus
+    EquityPlanId : EquityPlanId
 }
 
-type EquityPlan = {
+// type IndividualEquityPlan = {
+//     OrgUnit : OrgUnit
+//     AllocatedShares : double
+//     PercentAllocated : double
+//     PercentRemaining : double
+//     Status : IndividualPlanStatus
+// }
+
+type EquityPlanTemplate = {
     EquityPlanId : EquityPlanId 
     PlanName : PlanName 
     PlanType : PlanType
@@ -19,7 +47,6 @@ type EquityPlan = {
     // DiscountRate : DiscountRate
     // EligiblePopulation : EligiblePopulation
     // Conditions : Conditions
-    // IndividualEquityPlanItems : IndividualEquityPlan list
     // DateCreated : DateTime
     // DateExpired : DateTime
     // TotalShares : double
@@ -38,7 +65,7 @@ type EquityPlan = {
     let (<!>) = Validation.map
     let (<*>) = Validation.apply
 
-    let createEquityPlanValidated id name planType reason equityAmount equityCurrency :Validation<EquityPlan, DomainError> =
+    let createEquityPlanValidated id name planType reason equityAmount equityCurrency :Validation<EquityPlanTemplate, DomainError> =
         let equityPlanId = id |> EquityPlanId.create
         let planName = name |> PlanName.create
         let planType = planType |> PlanType.create (nameof planType)
