@@ -5,7 +5,7 @@ using MediatR;
 
 namespace Equity.Api.Commands;
 
-public class CreateEquityPlanCommand
+public record CreateEquityPlanCommand
 {
     public record Request(CreateEquityPlanRequestModel Dto) : IRequest<Validation<string, Guid>>;
 }

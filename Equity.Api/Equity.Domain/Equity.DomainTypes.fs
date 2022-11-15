@@ -10,6 +10,14 @@ type DraftIndividualEquityPlan = {
     EquityPlanId : EquityPlanId
 }
 
+type InProgressIndividualEquityPlan = {
+    Id : Guid
+    UserId : Guid
+    OrgUnit : OrgUnit
+    AllocatedShares : double
+    EquityPlanId : EquityPlanId
+}
+
 type InReviewIndividualEquityPlan = {
     Id : Guid
     UserId : Guid

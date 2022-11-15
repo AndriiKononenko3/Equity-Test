@@ -12,8 +12,8 @@ type Status =
 type IndividualEquityPlanDto = {
     Id : Guid
     UserId : Guid
-    OrgUnit : OrgUnit
-    AllocatedShares : Guid
+    OrgUnit : Guid
+    AllocatedShares : double
     PercentAllocated : double
     PercentRemaining : double
     EquityPlanId : Guid

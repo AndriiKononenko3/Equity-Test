@@ -12,6 +12,8 @@
         <Compile Include="Equity.SimpleTypes.fs" />
         <Compile Include="Equity.DomainTypes.fs" />
         <Compile Include="EquityPlanTemplate.Dto.fs" />
+        <Compile Include="IndividualEquityPlan.PublicTypes.fs" />
+        <Compile Include="IndividualEquityPlan.Implementation.fs" />
         <Compile Include="IndividualEquityPlan.Dto.fs" />
     </ItemGroup>
 
