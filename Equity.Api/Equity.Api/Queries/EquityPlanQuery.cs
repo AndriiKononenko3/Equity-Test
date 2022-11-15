@@ -1,3 +1,4 @@
+using Equity.Api.Common;
 using Equity.Domain;
 using Equity.Persistence;
 using LanguageExt;
@@ -14,7 +15,9 @@ public class EquityPlanQueryHandler : IRequestHandler<EquityPlanQuery.Request, V
 {
     private readonly EquityRepository _equityRepository = new ();
     
-    public async Task<Validation<string, EquityPlanDto>> Handle(EquityPlanQuery.Request request, CancellationToken cancellationToken)
+    public async Task<Validation<string, EquityPlanDto>> Handle(
+        EquityPlanQuery.Request request,
+        CancellationToken cancellationToken)
     {
         var equityResult = await _equityRepository.GetAsync(request.Id);
 
@@ -30,6 +33,6 @@ public class EquityPlanQueryHandler : IRequestHandler<EquityPlanQuery.Request, V
                 var errors = domainObject.ErrorValue.Select(DomainError.getErrorMsg).ToList();
                 return Validation<string, EquityPlanDto>.Fail(new Seq<string>(errors));
             },
-            () => Validation<string, EquityPlanDto>.Fail(new Seq<string>(new []{ "Not found" })));
+            () => Validation<string, EquityPlanDto>.Fail(new Seq<string>(new []{ ApplicationErrors.NotFoundError(nameof(EquityPlanDto), request.Id.ToString()) })));
     }
 }

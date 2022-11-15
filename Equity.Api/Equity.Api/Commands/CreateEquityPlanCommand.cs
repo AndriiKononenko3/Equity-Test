@@ -12,7 +12,9 @@ public class CreateEquityPlanCommand
 
 public class CreateEquityPlanCommandHandler : IRequestHandler<CreateEquityPlanCommand.Request, Validation<string, Guid>>
 {
-    public async Task<Validation<string, Guid>> Handle(CreateEquityPlanCommand.Request request, CancellationToken cancellationToken)
+    public async Task<Validation<string, Guid>> Handle(
+        CreateEquityPlanCommand.Request request,
+        CancellationToken cancellationToken)
     {
         var created = EquityPlanModule.createEquityPlanValidated(
             Guid.NewGuid(),
