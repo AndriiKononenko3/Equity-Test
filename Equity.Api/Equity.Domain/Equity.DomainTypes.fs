@@ -6,7 +6,7 @@ type DraftIndividualEquityPlan = {
     Id : Guid
     UserId : Guid
     OrgUnit : OrgUnit
-    AllocatedShares : double
+    AllocatedShares : decimal
     EquityPlanId : EquityPlanId
 }
 
@@ -14,7 +14,7 @@ type InProgressIndividualEquityPlan = {
     Id : Guid
     UserId : Guid
     OrgUnit : OrgUnit
-    AllocatedShares : double
+    AllocatedShares : decimal
     EquityPlanId : EquityPlanId
 }
 
@@ -22,7 +22,7 @@ type InReviewIndividualEquityPlan = {
     Id : Guid
     UserId : Guid
     OrgUnit : OrgUnit
-    AllocatedShares : double
+    AllocatedShares : decimal
     EquityPlanId : EquityPlanId
 }
 
@@ -30,9 +30,9 @@ type AllocatedIndividualEquityPlan = {
     Id : Guid
     UserId : Guid
     OrgUnit : OrgUnit
-    AllocatedShares : double
-    PercentAllocated : double
-    PercentRemaining : double
+    AllocatedShares : decimal
+    PercentAllocated : decimal<percent>
+    PercentRemaining : decimal<percent>
     EquityPlanId : EquityPlanId
 }
 

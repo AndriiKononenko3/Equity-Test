@@ -9,6 +9,8 @@ type DiscountRate = Undefined
 type EligiblePopulation = Undefined
 type Conditions = Undefined
 
+type [<Measure>] percent
+
 type FiatCurrency =
     | USD 
     | EUR
