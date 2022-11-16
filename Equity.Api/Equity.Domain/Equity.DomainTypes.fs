@@ -36,13 +36,13 @@ type AllocatedIndividualEquityPlan = {
     EquityPlanId : EquityPlanId
 }
 
-// type IndividualEquityPlan = {
-//     OrgUnit : OrgUnit
-//     AllocatedShares : double
-//     PercentAllocated : double
-//     PercentRemaining : double
-//     Status : IndividualPlanStatus
-// }
+type IndividualEquityPlan = {
+    OrgUnit : OrgUnit
+    AllocatedShares : decimal
+    PercentAllocated : decimal<percent>
+    PercentRemaining : decimal<percent>
+    Status : IndividualPlanStatus
+}
 
 type EquityPlanTemplate = {
     EquityPlanId : EquityPlanId 
@@ -54,7 +54,7 @@ type EquityPlanTemplate = {
     // VestingSchedule : VestingSchedule
     // DiscountRate : DiscountRate
     // EligiblePopulation : EligiblePopulation
-    // Conditions : Conditions
+    // Conditions : Conditions // assigns population
     // DateCreated : DateTime
     // DateExpired : DateTime
     // TotalShares : double
