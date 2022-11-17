@@ -20,14 +20,8 @@ module Domain =
             | DecimalValueExceedsLimit decimalValueExceedsLimitMsg -> decimalValueExceedsLimitMsg
             | NotValidFiatCurrency notValidFiatCurrencyMsg -> notValidFiatCurrencyMsg
         
-    type OrgUnit = Undefined
-    type VestingPeriod = Undefined
-    type VestingSchedule = Undefined
-    type DiscountRate = Undefined
-    type EligiblePopulation = Undefined
-    type Conditions = Undefined
-
     type [<Measure>] percent
+    type Conditions = Undefined // not for Alpha
 
     type FiatCurrency =
         | USD 
@@ -163,46 +157,50 @@ module Domain =
             | Ok fiatCurrency -> Ok (EquityValue(v, FiatCurrency fiatCurrency))
             | Error msg -> Error msg
             
-    type DraftIndividualEquityPlan = {
+    type ManagersEquityPlan = {
         Id : Guid
         UserId : Guid
-        OrgUnit : OrgUnit
+        OrgUnit : Guid
         AllocatedShares : decimal
         EquityPlanId : EquityPlanId
     }
 
-    type InProgressIndividualEquityPlan = {
+    type DraftEmployeesEquityPlan = {
         Id : Guid
         UserId : Guid
-        OrgUnit : OrgUnit
+        OrgUnit : Guid
         AllocatedShares : decimal
         EquityPlanId : EquityPlanId
     }
-
-    type InReviewIndividualEquityPlan = {
+    
+    type AllocatedEmployeesEquityPlan = {
         Id : Guid
         UserId : Guid
-        OrgUnit : OrgUnit
-        AllocatedShares : decimal
-        EquityPlanId : EquityPlanId
-    }
-
-    type AllocatedIndividualEquityPlan = {
-        Id : Guid
-        UserId : Guid
-        OrgUnit : OrgUnit
+        OrgUnit : Guid
         AllocatedShares : decimal
         PercentAllocated : decimal<percent>
         PercentRemaining : decimal<percent>
         EquityPlanId : EquityPlanId
     }
-
-    type IndividualEquityPlan = {
-        OrgUnit : OrgUnit
-        AllocatedShares : decimal
-        PercentAllocated : decimal<percent>
-        PercentRemaining : decimal<percent>
-        Status : IndividualPlanStatus
+    
+    type Tree<'LeafData,'INodeData> =
+    | LeafNode of 'LeafData
+    | InternalNode of 'INodeData * Tree<'LeafData,'INodeData> seq
+    
+    type DaftIndividualEquityPlan = Tree<DraftEmployeesEquityPlan,ManagersEquityPlan>
+    
+    type AllocatedIndividualEquityPlan = Tree<AllocatedEmployeesEquityPlan,ManagersEquityPlan>
+    
+    type EligiblePopulation = {
+        OrgUnits : Guid list
+        Employees : Guid list
+        // Excluded OrgUnits ?
+        // Excluded Employees ?
+    }
+    
+    type VestingSchedule = {
+        Date : DateOnly
+        Amount : decimal
     }
 
     type EquityPlanTemplate = {
@@ -210,29 +208,22 @@ module Domain =
         PlanName : PlanName 
         PlanType : PlanType
         AllocationReason : AllocationReason
+        TotalShares : decimal
         EquityValue : EquityValue
-        // VestingPeriod : VestingPeriod
-        // VestingSchedule : VestingSchedule
-        // DiscountRate : DiscountRate
-        // EligiblePopulation : EligiblePopulation
-        // Conditions : Conditions // assigns population
-        // DateCreated : DateTime
-        // DateExpired : DateTime
-        // TotalShares : double
+        VestingPeriodFrom : DateOnly
+        VestingSchedule : VestingSchedule list
+        EligiblePopulation : EligiblePopulation
+        DiscountRate : decimal<percent>
+        // Conditions : Conditions // assigns population not for Alpha
+        DateCreated : DateTime
+        DateExpired : DateOnly
         }
-    
-    type MoveIndividualPlanInProgress = 
-        DraftIndividualEquityPlan -> Result<InProgressIndividualEquityPlan, DomainError list>
         
-    type MoveIndividualPlanInReview = 
-        InProgressIndividualEquityPlan -> Result<InReviewIndividualEquityPlan, DomainError list>
+    type ApproveIndividualPlan = 
+        DraftEmployeesEquityPlan -> Result<AllocatedEmployeesEquityPlan, DomainError list>
         
     let notImplemented() = failwith "not implemented"
 
-    let moveIndividualPlanInProgress : MoveIndividualPlanInProgress = 
+    let approveIndividualPlan : ApproveIndividualPlan = 
         fun draftIndividualEquityPlan ->
-            notImplemented()
-
-    let moveIndividualPlanInReview : MoveIndividualPlanInReview = 
-        fun inProgressIndividualEquityPlan ->
             notImplemented()
