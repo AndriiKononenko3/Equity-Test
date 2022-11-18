@@ -72,12 +72,12 @@ module Domain =
         let value (PlanName v) = v
 
     [<Struct>]
-    type EquityPlanId = EquityPlanId of Guid
+    type EquityPlanId = EquityPlanId of int
 
     module EquityPlanId =
         let create id :Validation<EquityPlanId, DomainError> = 
-            if Guid.Empty = id then
-                let msg = EquityPlanIdNotEmpty "EquityPlanId must not empty"
+            if id = 0 then
+                let msg = EquityPlanIdNotEmpty "EquityPlanId must not zero"
                 Error [msg]
             else
                 Ok (EquityPlanId id)
@@ -156,27 +156,37 @@ module Domain =
             match currencyResult with
             | Ok fiatCurrency -> Ok (EquityValue(v, FiatCurrency fiatCurrency))
             | Error msg -> Error msg
-            
-    type ManagersEquityPlan = {
-        Id : Guid
-        UserId : Guid
-        OrgUnit : Guid
+       
+    type DraftManagersEquityPlan = {
+        Id : int
+        ManagerId : Guid
+        OrgUnitId : Guid
+        SharesToAllocate : decimal
+        EquityPlanId : EquityPlanId
+    }
+    
+    type ApprovedManagersEquityPlan = {
+        Id : int
+        ManagerId : Guid
+        OrgUnitId : Guid
         AllocatedShares : decimal
         EquityPlanId : EquityPlanId
     }
 
     type DraftEmployeesEquityPlan = {
-        Id : Guid
-        UserId : Guid
-        OrgUnit : Guid
-        AllocatedShares : decimal
+        Id : int
+        ManagerId : Guid
+        EmployeeId : Guid
+        OrgUnitId : Guid
+        SharesToAllocate : decimal
         EquityPlanId : EquityPlanId
     }
     
     type AllocatedEmployeesEquityPlan = {
-        Id : Guid
-        UserId : Guid
-        OrgUnit : Guid
+        Id : int
+        ManagerId : Guid
+        EmployeeId : Guid
+        OrgUnitId : Guid
         AllocatedShares : decimal
         PercentAllocated : decimal<percent>
         PercentRemaining : decimal<percent>
@@ -187,15 +197,21 @@ module Domain =
     | LeafNode of 'LeafData
     | InternalNode of 'INodeData * Tree<'LeafData,'INodeData> seq
     
-    type DaftIndividualEquityPlan = Tree<DraftEmployeesEquityPlan,ManagersEquityPlan>
+    type DaftIndividualEquityPlan = Tree<DraftEmployeesEquityPlan,DraftManagersEquityPlan>
     
-    type AllocatedIndividualEquityPlan = Tree<AllocatedEmployeesEquityPlan,ManagersEquityPlan>
+    let fromEmployeesPlan (employeesPlan:DraftEmployeesEquityPlan) =
+        LeafNode employeesPlan
+
+    let fromManagersPlan (managersPlan:DraftManagersEquityPlan) employeesPlans =
+        InternalNode (managersPlan, employeesPlans)
+    
+    type AllocatedIndividualEquityPlan = Tree<AllocatedEmployeesEquityPlan,ApprovedManagersEquityPlan>
     
     type EligiblePopulation = {
-        OrgUnits : Guid list
-        Employees : Guid list
-        // Excluded OrgUnits ?
-        // Excluded Employees ?
+        IncludedOrgUnits : Guid list option
+        IncludedEmployees : Guid list option
+        ExcludedOrgUnits : Guid list option
+        ExcludedEmployees : Guid list option
     }
     
     type VestingSchedule = {
@@ -213,8 +229,7 @@ module Domain =
         VestingPeriodFrom : DateOnly
         VestingSchedule : VestingSchedule list
         EligiblePopulation : EligiblePopulation
-        DiscountRate : decimal<percent>
-        // Conditions : Conditions // assigns population not for Alpha
+        DiscountRate : decimal<percent> option
         DateCreated : DateTime
         DateExpired : DateOnly
         }
