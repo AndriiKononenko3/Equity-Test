@@ -1,17 +1,18 @@
 module Equity.Domain.Logic
 
 open System
+open EventSourced
 
 module Domain =
     
-    type DomainError =
+    type ValidationError =
     | PlanNameNotEmpty of string
     | EquityPlanIdNotEmpty of string
     | PlanTypeDoesNotExist of string
     | AllocationReasonDoesNotExist of string
     | DecimalValueExceedsLimit of string
     | NotValidFiatCurrency of string
-        static member public getErrorMsg (error: DomainError) =
+        static member public getErrorMsg (error: ValidationError) =
             match error with
             | PlanNameNotEmpty planNameNotEmptyMsg -> planNameNotEmptyMsg
             | EquityPlanIdNotEmpty equityPlanIdNotEmptyMsg -> equityPlanIdNotEmptyMsg
@@ -28,7 +29,7 @@ module Domain =
         | EUR
 
     module FiatCurrency =
-        let create fieldName str :Validation<FiatCurrency, DomainError> = 
+        let create fieldName str :Validation<FiatCurrency, ValidationError> = 
             match str with
             | "USD" | "usd" -> 
                 Ok USD
@@ -63,7 +64,7 @@ module Domain =
     type PlanName = PlanName of string
 
     module PlanName =
-        let create str :Validation<PlanName, DomainError> = 
+        let create str :Validation<PlanName, ValidationError> = 
             if String.IsNullOrEmpty(str) then
                 let msg = PlanNameNotEmpty "PlanName must not be null or empty"
                 Error [msg]
@@ -72,11 +73,11 @@ module Domain =
         let value (PlanName v) = v
 
     [<Struct>]
-    type EquityPlanId = EquityPlanId of int
+    type EquityPlanId = EquityPlanId of Guid
 
     module EquityPlanId =
-        let create id :Validation<EquityPlanId, DomainError> = 
-            if id = 0 then
+        let create id :Validation<EquityPlanId, ValidationError> = 
+            if id = Guid.Empty then
                 let msg = EquityPlanIdNotEmpty "EquityPlanId must not zero"
                 Error [msg]
             else
@@ -91,7 +92,7 @@ module Domain =
         | EmployeeStockOwnershipPlan
         
      module PlanType =
-        let create fieldName str :Validation<PlanType, DomainError> = 
+        let create fieldName str :Validation<PlanType, ValidationError> = 
             match str with
             | "PerformanceShares" | "performanceShares" -> 
                 Ok PerformanceShares
@@ -119,7 +120,7 @@ module Domain =
         | RetentionReward
         
      module AllocationReason =
-        let create fieldName str :Validation<AllocationReason, DomainError> = 
+        let create fieldName str :Validation<AllocationReason, ValidationError> = 
             match str with
             | "Hire" | "hire" -> 
                 Ok Hire
@@ -151,7 +152,7 @@ module Domain =
                                         | EUR -> EUR |> FiatCurrency.value
             | _ -> failwith "todo"
 
-        let create v c :Validation<EquityValue, DomainError> =
+        let create v c :Validation<EquityValue, ValidationError> =
             let currencyResult = c |> FiatCurrency.create (nameof c)
             match currencyResult with
             | Ok fiatCurrency -> Ok (EquityValue(v, FiatCurrency fiatCurrency))
@@ -193,6 +194,7 @@ module Domain =
         EquityPlanId : EquityPlanId
     }
     
+    // some thoughts around tree-like structure
     type Tree<'LeafData,'INodeData> =
     | LeafNode of 'LeafData
     | InternalNode of 'INodeData * Tree<'LeafData,'INodeData> seq
@@ -233,12 +235,112 @@ module Domain =
         DateCreated : DateTime
         DateExpired : DateOnly
         }
+    
+    type DomainError =
+    | EquityPlanTemplateAlreadyCreated
+    | VestingScheduleItemAlreadyAddedInEquityPlanTemplate of VestingSchedule
+    
+    type Event =
+      | EquityPlanTemplateCreated of EquityPlanTemplate
+      | EligiblePopulationUpdated of EligiblePopulation
+      | ItemAddedToVestingSchedule of VestingSchedule
+      | ItemRemovedFromVestingSchedule of VestingSchedule
+      | TotalSharesUpdated of decimal
+      | EquityValueUpdated of EquityValue
+      | PlanNameChanged of string
+      | DraftManagersEquityPlanAssigned of DraftManagersEquityPlan
+      | DraftEmployeesEquityPlanAssigned of DraftEmployeesEquityPlan
+      | DomainError of DomainError
+      
+    type Command =
+      | CreateEquityPlanTemplate of EquityPlanTemplate
+      | ChangePlanName of string
+      | UpdateEligiblePopulation of EligiblePopulation
+      | AddItemToVestingSchedule of VestingSchedule
+      | RemoveItemToVestingSchedule of VestingSchedule
+      | UpdateTotalShares of decimal
+      | UpdateEquityValue of EquityValue
+      | AssignDraftManagersEquityPlan of DraftManagersEquityPlan
+      | AssignDraftEmployeesEquityPlan of DraftEmployeesEquityPlan
+      
+    let evolve (equityPlanTemplate : EquityPlanTemplate) event : EquityPlanTemplate =
+      match event with
+        | EquityPlanTemplateCreated equityPlanTemplate ->
+            equityPlanTemplate
+            
+        | EligiblePopulationUpdated eligiblePopulation ->
+            { equityPlanTemplate with EligiblePopulation = eligiblePopulation }
+            
+        | ItemAddedToVestingSchedule schedule ->
+            { equityPlanTemplate with VestingSchedule = schedule :: equityPlanTemplate.VestingSchedule }
+            
+        | ItemRemovedFromVestingSchedule schedule ->
+            let newSchedule =
+              equityPlanTemplate.VestingSchedule
+              |> List.filter (fun sch -> sch.Date <> schedule.Date)
+              
+            { equityPlanTemplate with VestingSchedule = newSchedule }
         
-    type ApproveIndividualPlan = 
-        DraftEmployeesEquityPlan -> Result<AllocatedEmployeesEquityPlan, DomainError list>
+        | _ -> failwith "todo"
         
-    let notImplemented() = failwith "not implemented"
+    let private emptyEquityPlanTemplate : EquityPlanTemplate =
+      {
+        EquityPlanId = EquityPlanId <| Guid.Empty
+        PlanName = PlanName "Empty"
+        PlanType = PerformanceShares  
+        AllocationReason = Hire
+        TotalShares = 0m
+        EquityValue = EquityValue (0m, FiatCurrency USD)
+        VestingPeriodFrom = DateOnly.MinValue
+        VestingSchedule = List.Empty
+        EligiblePopulation = { IncludedOrgUnits = None
+                               IncludedEmployees = None
+                               ExcludedOrgUnits = None
+                               ExcludedEmployees = None }
+        DiscountRate = None
+        DateCreated = DateTime.UtcNow
+        DateExpired = DateOnly.MaxValue
+        }
+        
+    let equityPlanTemplateState (givenHistory : Event list) =
+        givenHistory
+        |> List.fold evolve emptyEquityPlanTemplate
 
-    let approveIndividualPlan : ApproveIndividualPlan = 
-        fun draftIndividualEquityPlan ->
-            notImplemented()
+    let equityPlanTemplate : Projection<EquityPlanTemplate, Event> =
+      {
+        Init = emptyEquityPlanTemplate
+        Update = evolve
+      }
+      
+    let (|ItemAlreadyExistsInVestingSchedule|_|) vestingSchedule vestingScheduleItem =
+      match vestingSchedule |> List.tryFind (fun sch -> sch.Date = vestingScheduleItem.Date) with
+      | Some _ -> Some vestingScheduleItem
+      | _ -> None
+      
+    let handleCreateEquityPlanTemplate equityPlanTemplate history =
+      if history |> List.isEmpty then
+        [EquityPlanTemplateCreated equityPlanTemplate]
+      else
+        [EquityPlanTemplateAlreadyCreated |> DomainError]
+  
+    let addNewItemToVestingSchedule vestingScheduleItem equityPlanTemplate =
+      match vestingScheduleItem with
+      | ItemAlreadyExistsInVestingSchedule equityPlanTemplate.VestingSchedule _ ->
+          [VestingScheduleItemAlreadyAddedInEquityPlanTemplate vestingScheduleItem |> DomainError]
+
+      | _ -> [ItemAddedToVestingSchedule vestingScheduleItem]
+      
+    let private handleAddNewItemToVestingSchedule vestingScheduleItem history =
+      history
+      |> equityPlanTemplateState
+      |> addNewItemToVestingSchedule vestingScheduleItem
+        
+    let behaviour (command : Command) : EventProducer<Event> =
+      match command with
+      | CreateEquityPlanTemplate equityPlanTemplate ->
+          handleCreateEquityPlanTemplate equityPlanTemplate
+       
+      | AddItemToVestingSchedule vestingScheduleItem ->
+           handleAddNewItemToVestingSchedule vestingScheduleItem
+           
+      | _ -> failwith "todo"
