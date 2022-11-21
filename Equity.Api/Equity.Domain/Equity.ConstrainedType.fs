@@ -46,10 +46,10 @@ module ConstrainedType =
     /// Return Error if input is less than minVal or more than maxVal
     let createDecimal fieldName ctor minVal maxVal i = 
         if i < minVal then
-            let msg = DecimalValueExceedsLimit $"%s{fieldName}: Must not be less than %M{minVal}"
+            let msg = $"%s{fieldName}: Must not be less than %M{minVal}"
             Error msg
         elif i > maxVal then
-            let msg = DecimalValueExceedsLimit $"%s{fieldName}: Must not be greater than %M{maxVal}"
+            let msg = $"%s{fieldName}: Must not be greater than %M{maxVal}"
             Error msg
         else
             Ok (ctor i)

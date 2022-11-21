@@ -115,6 +115,7 @@ module Domain =
             | EmployeeStockOwnershipPlan -> "EmployeeStockOwnershipPlan"
 
     type AllocationReason =
+        | Empty
         | Hire 
         | AnnualReward
         | RetentionReward
@@ -216,82 +217,96 @@ module Domain =
         ExcludedEmployees : Guid list option
     }
     
+    type VestingDateType =
+        | Grant 
+        | Vesting
+        | Expiry
+    
     type VestingSchedule = {
         Date : DateOnly
+        Type: VestingDateType
         Amount : decimal
     }
 
-    type EquityPlanTemplate = {
+    type PerformanceSharesTemplate = {
         EquityPlanId : EquityPlanId 
-        PlanName : PlanName 
-        PlanType : PlanType
+        PlanName : PlanName
         AllocationReason : AllocationReason
         TotalShares : decimal
         EquityValue : EquityValue
-        VestingPeriodFrom : DateOnly
         VestingSchedule : VestingSchedule list
         EligiblePopulation : EligiblePopulation
         DiscountRate : decimal<percent> option
         DateCreated : DateTime
-        DateExpired : DateOnly
         }
+    
+    type PhantomStocksTemplate = {
+        EquityPlanId : EquityPlanId 
+        PlanName : PlanName 
+        AllocationReason : AllocationReason
+        TotalShares : decimal
+        EquityValue : EquityValue
+        EligiblePopulation : EligiblePopulation
+        DateCreated : DateTime
+        }
+    
+    type EquityPlanTemplate =
+    | PerformanceSharesPlanTemplate of PerformanceSharesTemplate
+    | PhantomStocksPlanTemplate of PhantomStocksTemplate
     
     type DomainError =
     | EquityPlanTemplateAlreadyCreated
     | VestingScheduleItemAlreadyAddedInEquityPlanTemplate of VestingSchedule
     
     type Event =
-      | EquityPlanTemplateCreated of EquityPlanTemplate
-      | EligiblePopulationUpdated of EligiblePopulation
-      | ItemAddedToVestingSchedule of VestingSchedule
-      | ItemRemovedFromVestingSchedule of VestingSchedule
-      | TotalSharesUpdated of decimal
-      | EquityValueUpdated of EquityValue
-      | PlanNameChanged of string
-      | DraftManagersEquityPlanAssigned of DraftManagersEquityPlan
-      | DraftEmployeesEquityPlanAssigned of DraftEmployeesEquityPlan
-      | DomainError of DomainError
+    | PerformanceSharesTemplateCreated of PerformanceSharesTemplate
+    | EligiblePopulationUpdated of EligiblePopulation
+    | ItemAddedToVestingSchedule of VestingSchedule
+    | ItemRemovedFromVestingSchedule of VestingSchedule
+    | TotalSharesUpdated of decimal
+    | EquityValueUpdated of EquityValue
+    | PlanNameChanged of string
+    | DraftManagersEquityPlanAssigned of DraftManagersEquityPlan
+    | DraftEmployeesEquityPlanAssigned of DraftEmployeesEquityPlan
+    | DomainError of DomainError
       
     type Command =
-      | CreateEquityPlanTemplate of EquityPlanTemplate
-      | ChangePlanName of string
-      | UpdateEligiblePopulation of EligiblePopulation
-      | AddItemToVestingSchedule of VestingSchedule
-      | RemoveItemToVestingSchedule of VestingSchedule
-      | UpdateTotalShares of decimal
-      | UpdateEquityValue of EquityValue
-      | AssignDraftManagersEquityPlan of DraftManagersEquityPlan
-      | AssignDraftEmployeesEquityPlan of DraftEmployeesEquityPlan
+    | CreatePerformanceSharesTemplate of PerformanceSharesTemplate
+    | ChangePlanName of string
+    | UpdateEligiblePopulation of EligiblePopulation
+    | AddItemToVestingScheduleToPerformancePlan of VestingSchedule
+    | RemoveItemToVestingSchedule of VestingSchedule
+    | UpdateTotalShares of decimal
+    | UpdateEquityValue of EquityValue
+    | AssignDraftManagersEquityPlan of DraftManagersEquityPlan
+    | AssignDraftEmployeesEquityPlan of DraftEmployeesEquityPlan
+    
+    let removeItemFromVestingSchedule (scheduleItem:VestingSchedule) (vestingSchedule:VestingSchedule list) =
+        vestingSchedule |> List.filter (fun sch -> sch.Date <> scheduleItem.Date)
       
-    let evolve (equityPlanTemplate : EquityPlanTemplate) event : EquityPlanTemplate =
+    let evolvePerformanceSharesTemplate performanceSharesTemplate event :PerformanceSharesTemplate =
       match event with
-        | EquityPlanTemplateCreated equityPlanTemplate ->
+        | PerformanceSharesTemplateCreated equityPlanTemplate ->
             equityPlanTemplate
             
         | EligiblePopulationUpdated eligiblePopulation ->
-            { equityPlanTemplate with EligiblePopulation = eligiblePopulation }
+            { performanceSharesTemplate with EligiblePopulation = eligiblePopulation }
             
         | ItemAddedToVestingSchedule schedule ->
-            { equityPlanTemplate with VestingSchedule = schedule :: equityPlanTemplate.VestingSchedule }
+            { performanceSharesTemplate with VestingSchedule = schedule :: performanceSharesTemplate.VestingSchedule }
             
         | ItemRemovedFromVestingSchedule schedule ->
-            let newSchedule =
-              equityPlanTemplate.VestingSchedule
-              |> List.filter (fun sch -> sch.Date <> schedule.Date)
-              
-            { equityPlanTemplate with VestingSchedule = newSchedule }
-        
+            { performanceSharesTemplate with VestingSchedule = removeItemFromVestingSchedule schedule performanceSharesTemplate.VestingSchedule }
+            
         | _ -> failwith "todo"
         
-    let private emptyEquityPlanTemplate : EquityPlanTemplate =
+    let private emptyPerformanceSharesTemplate : PerformanceSharesTemplate =
       {
-        EquityPlanId = EquityPlanId <| Guid.Empty
+        EquityPlanId = Guid.Empty |> EquityPlanId
         PlanName = PlanName "Empty"
-        PlanType = PerformanceShares  
-        AllocationReason = Hire
+        AllocationReason = Empty
         TotalShares = 0m
         EquityValue = EquityValue (0m, FiatCurrency USD)
-        VestingPeriodFrom = DateOnly.MinValue
         VestingSchedule = List.Empty
         EligiblePopulation = { IncludedOrgUnits = None
                                IncludedEmployees = None
@@ -299,17 +314,16 @@ module Domain =
                                ExcludedEmployees = None }
         DiscountRate = None
         DateCreated = DateTime.UtcNow
-        DateExpired = DateOnly.MaxValue
         }
         
-    let equityPlanTemplateState (givenHistory : Event list) =
+    let performanceSharesTemplateState (givenHistory:Event list) =
         givenHistory
-        |> List.fold evolve emptyEquityPlanTemplate
+        |> List.fold evolvePerformanceSharesTemplate emptyPerformanceSharesTemplate
 
-    let equityPlanTemplate : Projection<EquityPlanTemplate, Event> =
+    let performanceSharesTemplate : Projection<PerformanceSharesTemplate, Event> =
       {
-        Init = emptyEquityPlanTemplate
-        Update = evolve
+        Init = emptyPerformanceSharesTemplate
+        Update = evolvePerformanceSharesTemplate
       }
       
     let (|ItemAlreadyExistsInVestingSchedule|_|) vestingSchedule vestingScheduleItem =
@@ -317,30 +331,29 @@ module Domain =
       | Some _ -> Some vestingScheduleItem
       | _ -> None
       
-    let handleCreateEquityPlanTemplate equityPlanTemplate history =
-      if history |> List.isEmpty then
-        [EquityPlanTemplateCreated equityPlanTemplate]
-      else
-        [EquityPlanTemplateAlreadyCreated |> DomainError]
-  
-    let addNewItemToVestingSchedule vestingScheduleItem equityPlanTemplate =
+    let addNewItemToVestingSchedule vestingScheduleItem schedules =
       match vestingScheduleItem with
-      | ItemAlreadyExistsInVestingSchedule equityPlanTemplate.VestingSchedule _ ->
+      | ItemAlreadyExistsInVestingSchedule schedules _ ->
           [VestingScheduleItemAlreadyAddedInEquityPlanTemplate vestingScheduleItem |> DomainError]
 
       | _ -> [ItemAddedToVestingSchedule vestingScheduleItem]
       
-    let private handleAddNewItemToVestingSchedule vestingScheduleItem history =
-      history
-      |> equityPlanTemplateState
-      |> addNewItemToVestingSchedule vestingScheduleItem
+    let handleCreatePerformanceSharesTemplate equityPlanTemplate history =
+      if history |> List.isEmpty then
+        [PerformanceSharesTemplateCreated equityPlanTemplate]
+      else
+        [EquityPlanTemplateAlreadyCreated |> DomainError]
+      
+    let private handleAddNewItemToVestingScheduleToPerformancePlan vestingScheduleItem history =
+      let planTemplate = history |> performanceSharesTemplateState
+      addNewItemToVestingSchedule vestingScheduleItem planTemplate.VestingSchedule
         
-    let behaviour (command : Command) : EventProducer<Event> =
+    let behaviour command :EventProducer<Event> =
       match command with
-      | CreateEquityPlanTemplate equityPlanTemplate ->
-          handleCreateEquityPlanTemplate equityPlanTemplate
+      | CreatePerformanceSharesTemplate equityPlanTemplate ->
+          handleCreatePerformanceSharesTemplate equityPlanTemplate
        
-      | AddItemToVestingSchedule vestingScheduleItem ->
-           handleAddNewItemToVestingSchedule vestingScheduleItem
+      | AddItemToVestingScheduleToPerformancePlan vestingScheduleItem ->
+           handleAddNewItemToVestingScheduleToPerformancePlan vestingScheduleItem
            
       | _ -> failwith "todo"
