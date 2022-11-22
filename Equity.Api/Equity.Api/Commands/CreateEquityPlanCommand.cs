@@ -16,21 +16,28 @@ public class CreateEquityPlanCommandHandler : IRequestHandler<CreateEquityPlanCo
         CreateEquityPlanCommand.Request request,
         CancellationToken cancellationToken)
     {
-        var created = EquityPlanModule.createEquityPlanValidated(
+        var created = Logic.EquityDomain.PerformanceSharesTemplateModule.createPerformanceSharesTemplateValidated(
             Guid.NewGuid(),
             request.Dto.Name,
             request.Dto.Type,
             request.Dto.AllocationReason,
             request.Dto.Amount,
             request.Dto.Currency);
-        
+
         if (created.IsError)
         {
-            var errors = created.ErrorValue.Select(DomainError.getErrorMsg).ToList();
+            var errors = created.ErrorValue.Select(Logic.EquityDomain.ValidationError.getErrorMsg).ToList();
             return Validation<string, Guid>.Fail(new Seq<string>(errors));
         }
         
-        // saves to db
+        var commandEnvelope = Logic.EquityDomain.API.Command.createPerformanceSharesTemplate(created.ResultValue, created.ResultValue.EquityPlanId);
+        var result = await Logic.EquityDomain.CommandHandler.sendCommand(commandEnvelope);
+        if (result.IsError)
+        {
+            var errors = result.ErrorValue.Select(x => x.ToString()).ToList();
+            return Validation<string, Guid>.Fail(new Seq<string>(errors));
+        }
+
         return Validation<string, Guid>.Success(created.ResultValue.EquityPlanId.Item);
     }
 }

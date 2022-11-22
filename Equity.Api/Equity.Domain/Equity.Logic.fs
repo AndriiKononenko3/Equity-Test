@@ -1,9 +1,10 @@
 module Equity.Domain.Logic
 
 open System
+open System.Threading.Tasks
 open EventSourced
 
-module Domain =
+module EquityDomain =
     
     type ValidationError =
     | PlanNameNotEmpty of string
@@ -75,13 +76,16 @@ module Domain =
     [<Struct>]
     type EquityPlanId = EquityPlanId of Guid
 
-    module EquityPlanId =
+    module EquityPlanIdModule =
         let create id :Validation<EquityPlanId, ValidationError> = 
             if id = Guid.Empty then
                 let msg = EquityPlanIdNotEmpty "EquityPlanId must not zero"
                 Error [msg]
             else
                 Ok (EquityPlanId id)
+                
+        let createUnsafe id = 
+            EquityPlanId id
                 
         let value (EquityPlanId v) = v
 
@@ -139,6 +143,7 @@ module Domain =
             | Hire -> "Hire"
             | AnnualReward -> "AnnualReward"
             | RetentionReward -> "RetentionReward"
+            | _ -> failwith "todo"
 
     [<Struct>]
     type EquityValue = private EquityValue of amount:decimal * currency:Currency
@@ -268,7 +273,16 @@ module Domain =
     | PlanNameChanged of string
     | DraftManagersEquityPlanAssigned of DraftManagersEquityPlan
     | DraftEmployeesEquityPlanAssigned of DraftEmployeesEquityPlan
-    | DomainError of DomainError
+    | DomainErrorRaised of DomainError
+        static member isAnError event =
+            match event with
+            | DomainErrorRaised _ -> true
+            | _ -> false
+          
+        static member getError event =
+            match event with
+            | DomainErrorRaised error -> error
+            | _ -> failwith "error"
       
     type Command =
     | CreatePerformanceSharesTemplate of PerformanceSharesTemplate
@@ -280,6 +294,8 @@ module Domain =
     | UpdateEquityValue of EquityValue
     | AssignDraftManagersEquityPlan of DraftManagersEquityPlan
     | AssignDraftEmployeesEquityPlan of DraftEmployeesEquityPlan
+        static member ofCommand (obj:PerformanceSharesTemplate) =
+              CreatePerformanceSharesTemplate obj
     
     let removeItemFromVestingSchedule (scheduleItem:VestingSchedule) (vestingSchedule:VestingSchedule list) =
         vestingSchedule |> List.filter (fun sch -> sch.Date <> scheduleItem.Date)
@@ -326,29 +342,29 @@ module Domain =
         Update = evolvePerformanceSharesTemplate
       }
       
-    let (|ItemAlreadyExistsInVestingSchedule|_|) vestingSchedule vestingScheduleItem =
+    let internal (|ItemAlreadyExistsInVestingSchedule|_|) vestingSchedule vestingScheduleItem =
       match vestingSchedule |> List.tryFind (fun sch -> sch.Date = vestingScheduleItem.Date) with
       | Some _ -> Some vestingScheduleItem
       | _ -> None
       
-    let addNewItemToVestingSchedule vestingScheduleItem schedules =
+    let internal addNewItemToVestingSchedule vestingScheduleItem schedules =
       match vestingScheduleItem with
       | ItemAlreadyExistsInVestingSchedule schedules _ ->
-          [VestingScheduleItemAlreadyAddedInEquityPlanTemplate vestingScheduleItem |> DomainError]
+          [VestingScheduleItemAlreadyAddedInEquityPlanTemplate vestingScheduleItem |> DomainErrorRaised]
 
       | _ -> [ItemAddedToVestingSchedule vestingScheduleItem]
       
-    let handleCreatePerformanceSharesTemplate equityPlanTemplate history =
+    let private handleCreatePerformanceSharesTemplate equityPlanTemplate history =
       if history |> List.isEmpty then
         [PerformanceSharesTemplateCreated equityPlanTemplate]
       else
-        [EquityPlanTemplateAlreadyCreated |> DomainError]
+        [EquityPlanTemplateAlreadyCreated |> DomainErrorRaised]
       
     let private handleAddNewItemToVestingScheduleToPerformancePlan vestingScheduleItem history =
       let planTemplate = history |> performanceSharesTemplateState
       addNewItemToVestingSchedule vestingScheduleItem planTemplate.VestingSchedule
         
-    let behaviour command :EventProducer<Event> =
+    let performanceSharesTemplateBehaviour command :EventProducer<Event> =
       match command with
       | CreatePerformanceSharesTemplate equityPlanTemplate ->
           handleCreatePerformanceSharesTemplate equityPlanTemplate
@@ -357,3 +373,168 @@ module Domain =
            handleAddNewItemToVestingScheduleToPerformancePlan vestingScheduleItem
            
       | _ -> failwith "todo"
+      
+    module API =
+        
+        type PerformanceSharesTemplateCommandApi = {
+           CreatePerformanceSharesTemplate : PerformanceSharesTemplate * EquityPlanId -> CommandEnvelope<Command>
+           }
+        
+        module Command =
+        
+            let private envelope (EquityPlanId eventSource) command = {
+                Transaction = TransactionId.New()
+                EventSource = eventSource
+                Command = command
+              }
+        
+            let createPerformanceSharesTemplate = fun (performanceSharesTemplate, equityPlanId) -> envelope equityPlanId (CreatePerformanceSharesTemplate performanceSharesTemplate)
+            
+            // let performanceSharesTemplateCommandApi : PerformanceSharesTemplateCommandApi = {
+            //     CreatePerformanceSharesTemplate = fun (performanceSharesTemplate, equityPlanId) -> envelope equityPlanId (CreatePerformanceSharesTemplate performanceSharesTemplate)
+            //     }
+    
+        module Query =
+            
+            let private projectIntoMap projection =
+              fun state eventEnvelope ->
+                state
+                |> Map.tryFind eventEnvelope.Metadata.Source
+                |> Option.defaultValue projection.Init
+                |> fun projectionState -> eventEnvelope.Event |> projection.Update projectionState
+                |> fun newState -> state |> Map.add eventEnvelope.Metadata.Source newState
+        
+            let readModel (events:EventEnvelope<Event> list) =
+                events
+                |> List.fold (projectIntoMap performanceSharesTemplate) Map.empty
+                
+            let performanceSharesTemplate (EquityPlanId equityPlanId) =
+              task {
+                do! Async.Sleep 500
+                
+                let events = [
+                    {
+                      Event = PerformanceSharesTemplateCreated {
+                        EquityPlanId = equityPlanId |> EquityPlanId
+                        PlanName = PlanName "Performance Shares"
+                        AllocationReason = Empty
+                        TotalShares = 0m
+                        EquityValue = EquityValue (500_000m, FiatCurrency USD)
+                        VestingSchedule = List.Empty
+                        EligiblePopulation = { IncludedOrgUnits = None
+                                               IncludedEmployees = None
+                                               ExcludedOrgUnits = None
+                                               ExcludedEmployees = None }
+                        DiscountRate = None
+                        DateCreated = DateTime.UtcNow
+                        }
+                      Metadata = {
+                       Transaction = TransactionId.New()
+                       Source = equityPlanId
+                       RecordedAtUtc = DateTime.UtcNow
+                       }
+                    }]
+                
+                let state = readModel events
+
+                return
+                   match state |> Map.tryFind equityPlanId with
+                    | Some performanceSharesTemplate ->
+                        Ok performanceSharesTemplate
+
+                    | None ->
+                        Error "todo not found"
+              }
+  
+    [<RequireQualifiedAccess>]
+    module CommandHandler =
+      
+        let applyBehaviour (behaviour : Behaviour<_,_>) command  =
+          behaviour command
+
+        let sendCommand commandEnvelope : Task<Result<Event list, DomainError list>> =
+            task {
+                do! Async.Sleep 500
+                
+                let events = List.Empty
+                //let events = [EquityPlanTemplateAlreadyCreated |> DomainErrorRaised]
+                let result = applyBehaviour performanceSharesTemplateBehaviour commandEnvelope.Command events
+                // todo append to stream
+                
+                return match result |> List.filter Event.isAnError with
+                        | [] -> result |> Ok
+                        | errors -> errors |> List.map Event.getError |> Error
+            }
+            
+    type EquityPlanTemplateDto = {
+        Id : Guid
+        Name : string
+        Type : string
+        AllocationReason : string
+        EquityValue : decimal
+        EquityCurrency : string
+        }
+
+    module public PerformanceSharesTemplateMapping =
+        
+        let fromEquityPlan (domainObj:PerformanceSharesTemplate) :EquityPlanTemplateDto = 
+            {
+                Id = domainObj.EquityPlanId |> EquityPlanIdModule.value
+                Name = domainObj.PlanName |> PlanName.value
+                Type = PerformanceShares |> PlanType.value
+                AllocationReason = domainObj.AllocationReason |> AllocationReason.value
+                EquityValue = domainObj.EquityValue |> EquityValue.amountValue
+                EquityCurrency = domainObj.EquityValue |> EquityValue.currencyValue
+            }
+            
+        let toEquityPlan (dto:EquityPlanTemplateDto) :Result<PerformanceSharesTemplate,ValidationError list> =
+            result {
+                let! equityPlanId = dto.Id |> EquityPlanIdModule.create
+                let! planName = dto.Name |> PlanName.create
+                let! allocationReason = dto.AllocationReason |> AllocationReason.create (nameof dto.AllocationReason)
+                let! price = EquityValue.create dto.EquityValue dto.EquityCurrency
+                
+                let equityPlan = {
+                    EquityPlanId = equityPlanId
+                    PlanName = planName
+                    AllocationReason = allocationReason
+                    TotalShares = 0m
+                    EquityValue = price
+                    VestingSchedule = List.Empty
+                    EligiblePopulation = { IncludedOrgUnits = None
+                                           IncludedEmployees = None
+                                           ExcludedOrgUnits = None
+                                           ExcludedEmployees = None }
+                    DiscountRate = None
+                    DateCreated = DateTime.UtcNow
+                }
+                return equityPlan
+                }
+    
+     module PerformanceSharesTemplateModule =
+        let private createPerformanceSharesTemplate id name planType reason equityValue =
+            {
+                EquityPlanId = id;
+                PlanName = name;
+                AllocationReason = reason
+                EquityValue = equityValue
+                TotalShares = 0m
+                VestingSchedule = List.Empty
+                EligiblePopulation = { IncludedOrgUnits = None
+                                       IncludedEmployees = None
+                                       ExcludedOrgUnits = None
+                                       ExcludedEmployees = None }
+                DiscountRate = None
+                DateCreated = DateTime.UtcNow
+            }
+        
+        let (<!>) = Validation.map
+        let (<*>) = Validation.apply
+
+        let createPerformanceSharesTemplateValidated id name planType reason equityAmount equityCurrency :Validation<PerformanceSharesTemplate, ValidationError> =
+            let equityPlanId = id |> EquityPlanIdModule.create
+            let planName = name |> PlanName.create
+            let planType = planType |> PlanType.create (nameof planType)
+            let allocationReason = reason |> AllocationReason.create (nameof reason)
+            let equityValue = EquityValue.create equityAmount equityCurrency
+            createPerformanceSharesTemplate <!> equityPlanId <*> planName <*> planType <*> allocationReason <*> equityValue

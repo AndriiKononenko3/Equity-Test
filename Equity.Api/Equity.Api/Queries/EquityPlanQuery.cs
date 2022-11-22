@@ -19,20 +19,14 @@ public class EquityPlanQueryHandler : IRequestHandler<EquityPlanQuery.Request, V
         EquityPlanQuery.Request request,
         CancellationToken cancellationToken)
     {
-        var equityResult = await _equityRepository.GetAsync(request.Id);
+        var equityResult = await Logic.EquityDomain.API.Query.performanceSharesTemplate(Logic.EquityDomain.EquityPlanIdModule.createUnsafe(request.Id));
+        
+        if (equityResult.IsError)
+        {
+            var errors = new List<string>{ equityResult.ErrorValue };
+            return Validation<string, EquityPlanTemplateDto>.Fail(new Seq<string>(errors));
+        }
 
-        return equityResult.Match(
-            equity =>
-            {
-                var domainObject = EquityPlanTemplateMapping.toEquityPlan(equity);
-                if (!domainObject.IsError)
-                {
-                    return Validation<string, EquityPlanTemplateDto>.Success(EquityPlanTemplateMapping.fromEquityPlan(domainObject.ResultValue));
-                }
-
-                var errors = domainObject.ErrorValue.Select(DomainError.getErrorMsg).ToList();
-                return Validation<string, EquityPlanTemplateDto>.Fail(new Seq<string>(errors));
-            },
-            () => Validation<string, EquityPlanTemplateDto>.Fail(new Seq<string>(new []{ ApplicationErrors.NotFoundError(nameof(EquityPlanTemplateDto), request.Id.ToString()) })));
+        throw new ArgumentException();
     }
 }
