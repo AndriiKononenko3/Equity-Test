@@ -14,7 +14,6 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Equity.Domain\Equity.Domain.fsproj" />
-      <ProjectReference Include="..\Equity.Persistence\Equity.Persistence.csproj" />
     </ItemGroup>
 
 </Project>
