@@ -23,6 +23,7 @@ public class EquityPlanQueryHandler : IRequestHandler<EquityPlanQuery.Request, V
             return Validation<string, Logic.EquityDomain.EquityPlanTemplateDto>.Fail(new Seq<string>(errors));
         }
 
-        throw new ArgumentException();
+        var dto = Logic.EquityDomain.PerformanceSharesTemplateMapping.fromEquityPlan(equityResult.ResultValue);
+        return Validation<string, Logic.EquityDomain.EquityPlanTemplateDto>.Success(dto);
     }
 }

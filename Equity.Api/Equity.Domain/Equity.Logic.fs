@@ -13,8 +13,8 @@ module EquityDomain =
     | AllocationReasonDoesNotExist of string
     | DecimalValueExceedsLimit of string
     | NotValidFiatCurrency of string
-        static member public getErrorMsg (error: ValidationError) =
-            match error with
+        override this.ToString() =
+            match this with
             | PlanNameNotEmpty planNameNotEmptyMsg -> planNameNotEmptyMsg
             | EquityPlanIdNotEmpty equityPlanIdNotEmptyMsg -> equityPlanIdNotEmptyMsg
             | PlanTypeDoesNotExist planTypeDoesNotExistMsg -> planTypeDoesNotExistMsg
@@ -294,8 +294,6 @@ module EquityDomain =
     | UpdateEquityValue of EquityValue
     | AssignDraftManagersEquityPlan of DraftManagersEquityPlan
     | AssignDraftEmployeesEquityPlan of DraftEmployeesEquityPlan
-        static member ofCommand (obj:PerformanceSharesTemplate) =
-              CreatePerformanceSharesTemplate obj
     
     let removeItemFromVestingSchedule (scheduleItem:VestingSchedule) (vestingSchedule:VestingSchedule list) =
         vestingSchedule |> List.filter (fun sch -> sch.Date <> scheduleItem.Date)
@@ -417,7 +415,7 @@ module EquityDomain =
                       Event = PerformanceSharesTemplateCreated {
                         EquityPlanId = equityPlanId |> EquityPlanId
                         PlanName = PlanName "Performance Shares"
-                        AllocationReason = Empty
+                        AllocationReason = Hire
                         TotalShares = 0m
                         EquityValue = EquityValue (500_000m, FiatCurrency USD)
                         VestingSchedule = List.Empty
