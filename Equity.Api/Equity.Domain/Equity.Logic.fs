@@ -146,7 +146,7 @@ module EquityDomain =
             | _ -> failwith "todo"
 
     [<Struct>]
-    type EquityValue = private EquityValue of amount:decimal * currency:Currency
+    type EquityValue = EquityValue of amount:decimal * currency:Currency
 
     module EquityValue =
         let amountValue (EquityValue (v, _)) = v
@@ -239,7 +239,7 @@ module EquityDomain =
         AllocationReason : AllocationReason
         TotalShares : decimal
         EquityValue : EquityValue
-        VestingSchedule : VestingSchedule list
+        VestingScheduleList : VestingSchedule list
         EligiblePopulation : EligiblePopulation
         DiscountRate : decimal<percent> option
         DateCreated : DateTime
@@ -307,10 +307,10 @@ module EquityDomain =
             { performanceSharesTemplate with EligiblePopulation = eligiblePopulation }
             
         | ItemAddedToVestingSchedule schedule ->
-            { performanceSharesTemplate with VestingSchedule = schedule :: performanceSharesTemplate.VestingSchedule }
+            { performanceSharesTemplate with VestingScheduleList = schedule :: performanceSharesTemplate.VestingScheduleList }
             
         | ItemRemovedFromVestingSchedule schedule ->
-            { performanceSharesTemplate with VestingSchedule = removeItemFromVestingSchedule schedule performanceSharesTemplate.VestingSchedule }
+            { performanceSharesTemplate with VestingScheduleList = removeItemFromVestingSchedule schedule performanceSharesTemplate.VestingScheduleList }
             
         | _ -> failwith "todo"
         
@@ -321,7 +321,7 @@ module EquityDomain =
         AllocationReason = Empty
         TotalShares = 0m
         EquityValue = EquityValue (0m, FiatCurrency USD)
-        VestingSchedule = List.Empty
+        VestingScheduleList = List.Empty
         EligiblePopulation = { IncludedOrgUnits = None
                                IncludedEmployees = None
                                ExcludedOrgUnits = None
@@ -347,8 +347,8 @@ module EquityDomain =
       
     let internal addNewItemToVestingSchedule vestingScheduleItem schedules =
       match vestingScheduleItem with
-      | ItemAlreadyExistsInVestingSchedule schedules _ ->
-          [VestingScheduleItemAlreadyAddedInEquityPlanTemplate vestingScheduleItem |> DomainErrorRaised]
+      | ItemAlreadyExistsInVestingSchedule schedules item ->
+          [VestingScheduleItemAlreadyAddedInEquityPlanTemplate item |> DomainErrorRaised]
 
       | _ -> [ItemAddedToVestingSchedule vestingScheduleItem]
       
@@ -360,7 +360,7 @@ module EquityDomain =
       
     let private handleAddNewItemToVestingScheduleToPerformancePlan vestingScheduleItem history =
       let planTemplate = history |> performanceSharesTemplateState
-      addNewItemToVestingSchedule vestingScheduleItem planTemplate.VestingSchedule
+      addNewItemToVestingSchedule vestingScheduleItem planTemplate.VestingScheduleList
         
     let performanceSharesTemplateBehaviour command :EventProducer<Event> =
       match command with
@@ -418,7 +418,7 @@ module EquityDomain =
                         AllocationReason = Hire
                         TotalShares = 0m
                         EquityValue = EquityValue (500_000m, FiatCurrency USD)
-                        VestingSchedule = List.Empty
+                        VestingScheduleList = List.Empty
                         EligiblePopulation = { IncludedOrgUnits = None
                                                IncludedEmployees = None
                                                ExcludedOrgUnits = None
@@ -498,7 +498,7 @@ module EquityDomain =
                     AllocationReason = allocationReason
                     TotalShares = 0m
                     EquityValue = price
-                    VestingSchedule = List.Empty
+                    VestingScheduleList = List.Empty
                     EligiblePopulation = { IncludedOrgUnits = None
                                            IncludedEmployees = None
                                            ExcludedOrgUnits = None
@@ -517,7 +517,7 @@ module EquityDomain =
                 AllocationReason = reason
                 EquityValue = equityValue
                 TotalShares = 0m
-                VestingSchedule = List.Empty
+                VestingScheduleList = List.Empty
                 EligiblePopulation = { IncludedOrgUnits = None
                                        IncludedEmployees = None
                                        ExcludedOrgUnits = None

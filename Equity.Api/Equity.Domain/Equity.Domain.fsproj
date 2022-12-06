@@ -9,6 +9,13 @@
         <Compile Include="EventSourced.fs" />
         <Compile Include="Result.fs" />
         <Compile Include="Equity.Logic.fs" />
+        <Compile Include="Equity.Logic.New.fs" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="FsUnit" Version="5.1.0" />
+      <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.4.0" />
+      <PackageReference Include="NUnit" Version="3.13.3" />
     </ItemGroup>
 
 </Project>
