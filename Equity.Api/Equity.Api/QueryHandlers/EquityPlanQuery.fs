@@ -11,7 +11,7 @@ module EquityPlanQuery =
     
     let getById (createConnection: unit -> Async<IDbConnection>) (id: Queries.EquityPlanById.Query) : Task<Result<Queries.EquityPlanById.Result, string>> =
         taskResult {
-            // dummy code to show how to use dependencies
+            // dummy code to show how to inject dependencies
             use! connection = createConnection ()
             let equityPlanId = Logic.EquityDomain.EquityPlanId (Guid.NewGuid())
             let! resultTemplate = Logic.EquityDomain.API.Query.performanceSharesTemplate equityPlanId
