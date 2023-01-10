@@ -79,7 +79,7 @@ let ``test add item to non-existing schedule`` () =
         | VestingScheduleList schedules ->
             schedules.Length |> should equal 1
             schedules.Head |> should equal scheduleItem
-        | _ -> failwith "missing vesting schedule"
+            | _ -> failwith "missing vesting schedule"
         
 [<Test>]
 let ``test add item to existing schedule`` () =

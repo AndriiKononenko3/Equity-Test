@@ -1,9 +1,9 @@
-using Equity.Api.RequestModels;
+using Equity.CSharp.Api.RequestModels;
 using Equity.Domain;
 using LanguageExt;
 using MediatR;
 
-namespace Equity.Api.Commands;
+namespace Equity.CSharp.Api.Commands;
 
 public record CreateEquityPlanCommand
 {

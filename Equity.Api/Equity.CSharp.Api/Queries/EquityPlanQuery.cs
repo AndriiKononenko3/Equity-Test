@@ -2,7 +2,7 @@ using Equity.Domain;
 using LanguageExt;
 using MediatR;
 
-namespace Equity.Api.Queries;
+namespace Equity.CSharp.Api.Queries;
 
 public class EquityPlanQuery
 {

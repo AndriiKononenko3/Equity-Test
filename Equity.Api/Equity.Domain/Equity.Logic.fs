@@ -475,9 +475,11 @@ module EquityDomain =
 
     module public PerformanceSharesTemplateMapping =
         
-        let fromEquityPlan (domainObj:PerformanceSharesTemplate) :EquityPlanTemplateDto = 
+        open Queries.EquityPlanById
+        
+        let fromEquityPlan (domainObj:PerformanceSharesTemplate) :Queries.EquityPlanById.Result = 
             {
-                Id = domainObj.EquityPlanId |> EquityPlanIdModule.value
+                Id = 1
                 Name = domainObj.PlanName |> PlanName.value
                 Type = PerformanceShares |> PlanType.value
                 AllocationReason = domainObj.AllocationReason |> AllocationReason.value

@@ -1,10 +1,10 @@
-using Equity.Api.Commands;
-using Equity.Api.Queries;
-using Equity.Api.RequestModels;
+using Equity.CSharp.Api.Commands;
+using Equity.CSharp.Api.Queries;
+using Equity.CSharp.Api.RequestModels;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Equity.Api.Controllers;
+namespace Equity.CSharp.Api.Controllers;
 
 [ApiController]
 [Route("[controller]")]

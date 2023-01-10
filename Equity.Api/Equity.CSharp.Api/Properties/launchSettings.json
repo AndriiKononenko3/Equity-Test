@@ -8,7 +8,7 @@
     }
   },
   "profiles": {
-    "Equity.Api": {
+    "Equity.CSharp.Api": {
       "commandName": "Project",
       "dotnetRunMessages": true,
       "launchBrowser": true,

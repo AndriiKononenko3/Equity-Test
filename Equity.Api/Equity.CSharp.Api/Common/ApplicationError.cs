@@ -1,4 +1,4 @@
-namespace Equity.Api.Common;
+namespace Equity.CSharp.Api.Common;
 
 public record struct ApplicationError(string Msg);
 
