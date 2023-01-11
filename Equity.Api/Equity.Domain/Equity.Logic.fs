@@ -486,6 +486,30 @@ module EquityDomain =
                 EquityValue = domainObj.EquityValue |> EquityValue.amountValue
                 EquityCurrency = domainObj.EquityValue |> EquityValue.currencyValue
             }
+        
+        let toEquityPlanDomain id name reason equityValue equityCurrency :Result<PerformanceSharesTemplate,ValidationError list> =
+            result {
+                let! equityPlanId = id |> EquityPlanIdModule.create
+                let! planName = name |> PlanName.create
+                let! allocationReason = reason |> AllocationReason.create (nameof reason)
+                let! price = EquityValue.create equityValue equityCurrency
+                
+                let equityPlan = {
+                    EquityPlanId = equityPlanId
+                    PlanName = planName
+                    AllocationReason = allocationReason
+                    TotalShares = 0m
+                    EquityValue = price
+                    VestingScheduleList = List.Empty
+                    EligiblePopulation = { IncludedOrgUnits = None
+                                           IncludedEmployees = None
+                                           ExcludedOrgUnits = None
+                                           ExcludedEmployees = None }
+                    DiscountRate = None
+                    DateCreated = DateTime.UtcNow
+                }
+                return equityPlan
+                }
             
         let toEquityPlan (dto:EquityPlanTemplateDto) :Result<PerformanceSharesTemplate,ValidationError list> =
             result {

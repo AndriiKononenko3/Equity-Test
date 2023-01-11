@@ -1,4 +1,4 @@
-module Equity.Api.QueryHandlers
+namespace Equity.Api.QueryHandlers
 
 open System
 open System.Data
@@ -7,9 +7,9 @@ open FSharp.Core
 open Equity.Domain
 open FsToolkit.ErrorHandling
 
-module EquityPlanQuery =
+module EquityPlanQueryHandler =
     
-    let getById (createConnection: unit -> Async<IDbConnection>) (id: Queries.EquityPlanById.Query) : Task<Result<Queries.EquityPlanById.Result, string>> =
+    let getById (createConnection: unit -> Async<IDbConnection>) (id: Queries.EquityPlanById.Query) :Task<Result<Queries.EquityPlanById.Result, string>> =
         taskResult {
             // dummy code to show how to inject dependencies
             use! connection = createConnection ()
