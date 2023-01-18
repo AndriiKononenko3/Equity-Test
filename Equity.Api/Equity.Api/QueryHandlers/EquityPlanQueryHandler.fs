@@ -9,11 +9,11 @@ open FsToolkit.ErrorHandling
 
 module EquityPlanQueryHandler =
     
-    let getById (createConnection: unit -> Async<IDbConnection>) (id: Queries.EquityPlanById.Query) :Task<Result<Queries.EquityPlanById.Result, string>> =
+    let getById (createConnection: unit -> Task<IDbConnection>) (id: Queries.EquityPlanById.Query) :Task<Result<Queries.EquityPlanById.Result, string>> =
         taskResult {
             // dummy code to show how to inject dependencies
             use! connection = createConnection ()
             let equityPlanId = Logic.EquityDomain.EquityPlanId (Guid.NewGuid())
             let! resultTemplate = Logic.EquityDomain.API.Query.performanceSharesTemplate equityPlanId
-            return Logic.EquityDomain.PerformanceSharesTemplateMapping.fromEquityPlan resultTemplate
+            return Logic.EquityDomain.PerformanceSharesTemplateMapping.fromEquityPlan 12 resultTemplate
         }

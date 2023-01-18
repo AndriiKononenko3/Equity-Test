@@ -477,9 +477,9 @@ module EquityDomain =
         
         open Queries.EquityPlanById
         
-        let fromEquityPlan (domainObj:PerformanceSharesTemplate) :Queries.EquityPlanById.Result = 
+        let fromEquityPlan (id:int64)(domainObj:PerformanceSharesTemplate) :Queries.EquityPlanById.Result = 
             {
-                Id = 1
+                Id = id
                 Name = domainObj.PlanName |> PlanName.value
                 Type = PerformanceShares |> PlanType.value
                 AllocationReason = domainObj.AllocationReason |> AllocationReason.value

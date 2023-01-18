@@ -7,6 +7,8 @@
         <PackageReference Include="FsToolkit.ErrorHandling" Version="4.2.1" />
         <PackageReference Include="FsToolkit.ErrorHandling.TaskResult" Version="4.2.1" />
         <PackageReference Include="Giraffe" Version="6.0.0" />
+        <PackageReference Include="Giraffe.GoodRead" Version="2.1.0" />
+        <PackageReference Include="HODI" Version="2.0.1" />
         <PackageReference Include="IdGen" Version="3.0.3" />
         <PackageReference Include="Npgsql" Version="7.0.1" />
     </ItemGroup>
@@ -15,6 +17,8 @@
         <Compile Include="Settings.fs" />
         <Compile Include="DapperFSharp.fs" />
         <Compile Include="QueryHandlers\EquityPlanQueryHandler.fs" />
+        <Compile Include="QueryHandlers\EquityPlanQueryV2Handler.fs" />
+        <Compile Include="QueryHandlers\EquityPlanQueryV3Handler.fs" />
         <Compile Include="CommandHandlers\EquityPlanCommandHandler.fs" />
         <Compile Include="CompositionRoot\Trunk.fs" />
         <Compile Include="CompositionRoot\CompositionRoot.fs" />

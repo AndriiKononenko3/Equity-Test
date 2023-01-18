@@ -10,13 +10,13 @@ open FsToolkit.ErrorHandling
 
 module EquityPlanCommandHandler =
     
-    let private insert (createConnection: unit -> Async<IDbConnection>) (performanceTemplateItem: PerformanceSharesTemplate) =
+    let private insert (createConnection: unit -> Task<IDbConnection>) (performanceTemplateItem: PerformanceSharesTemplate) =
         task {
             use! connection = createConnection ()
             return Result.Ok(performanceTemplateItem)
         }
         
-    let create (createConnection: unit -> Async<IDbConnection>) (createId: unit -> int64) (dto:Commands.CreateEquityPlanCommand.Command) :Task<Result<PerformanceSharesTemplate, ValidationError list>> =
+    let create (createConnection: unit -> Task<IDbConnection>) (createId: unit -> int64) (dto:Commands.CreateEquityPlanCommand.Command) :Task<Result<PerformanceSharesTemplate, ValidationError list>> =
         taskResult {
             // dummy code to show how to inject dependencies
             let id = createId()
